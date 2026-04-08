@@ -46,6 +46,10 @@ public final class ServerOfflineMessageOnFragment implements OnFragment, NetServ
 
         int serverId = decoder.serverId();
         var server = ServerManager.getServerById(serverId);
+        if (server == null) {
+            return;
+        }
+
         ServerLineKit.offlineProcess(server, setting);
     }
 

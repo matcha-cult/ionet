@@ -50,21 +50,41 @@ final class DefaultCenterConnectionManager implements CenterConnectionManager {
 
     @Override
     public Stream<ServerMessage> streamServerMessage() {
+        this.pruneDisconnectedConnections();
         return connectionMap.values().stream().map(CenterClientConnection::getMessage);
     }
 
     @Override
     public boolean containsNetId(int netId) {
-        return publicationMap.containsKey(netId);
+        Publication publication = this.publicationMap.get(netId);
+        if (this.isAvailable(publication)) {
+            return true;
+        }
+
+        if (publication != null) {
+            this.pruneDisconnectedConnections();
+        }
+
+        return false;
     }
 
     @Override
     public Publication getPublicationByNetId(int netId) {
-        return this.publicationMap.get(netId);
+        Publication publication = this.publicationMap.get(netId);
+        if (this.isAvailable(publication)) {
+            return publication;
+        }
+
+        if (publication != null) {
+            this.pruneDisconnectedConnections();
+        }
+
+        return null;
     }
 
     @Override
     public void addConnection(CenterClientConnection connection) {
+        this.pruneDisconnectedConnections();
         this.publicationMap.put(connection.getNetId(), connection.getPublication());
         this.connectionMap.put(connection.getServerId(), connection);
         this.publisher.addPublication(connection.getPubName(), connection.getPublication());
@@ -78,6 +98,30 @@ final class DefaultCenterConnectionManager implements CenterConnectionManager {
     @Override
     public int poll(FragmentHandler fragmentHandler) {
         return this.subscription.poll(fragmentHandler, 1);
+    }
+
+    private void pruneDisconnectedConnections() {
+        var disconnectedConnections = connectionMap.values().stream()
+                .filter(connection -> !this.isAvailable(connection.getPublication()))
+                .toList();
+
+        disconnectedConnections.forEach(this::removeConnection);
+    }
+
+    private void removeConnection(CenterClientConnection connection) {
+        this.connectionMap.remove(connection.getServerId(), connection);
+
+        int netId = connection.getNetId();
+        boolean hasActiveSibling = this.connectionMap.values().stream()
+                .anyMatch(item -> item.getNetId() == netId && this.isAvailable(item.getPublication()));
+
+        if (!hasActiveSibling) {
+            this.publicationMap.remove(netId, connection.getPublication());
+        }
+    }
+
+    private boolean isAvailable(Publication publication) {
+        return publication != null && !publication.isClosed() && publication.isConnected();
     }
 
     private void init() {

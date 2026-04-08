@@ -64,7 +64,9 @@ hs_err_pid*
 doc_temp.txt
 
 /local/
+local-knowledge/
 .codex
 .claude
 CLAUDE.md
 AGENTS.md
+AGENTS.compact.md

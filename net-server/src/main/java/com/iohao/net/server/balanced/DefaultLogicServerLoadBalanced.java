@@ -68,15 +68,22 @@ final class DefaultLogicServerLoadBalanced implements LogicServerLoadBalanced {
         int id = message.id();
         String tag = message.tag();
 
-        this.tagServerMap.remove(tag);
+        this.removeIfOwnedByServer(this.tagServerMap, tag, id);
         this.idServerMap.remove(id);
 
 
         var cmdMerges = message.cmdMerges();
         if (cmdMerges != null) {
             for (int cmdMerge : cmdMerges) {
-                this.cmdServerMap.remove(cmdMerge);
+                this.removeIfOwnedByServer(this.cmdServerMap, cmdMerge, id);
             }
+        }
+    }
+
+    private <K> void removeIfOwnedByServer(Map<K, Server> serverMap, K key, int serverId) {
+        Server current = serverMap.get(key);
+        if (current != null && current.id() == serverId) {
+            serverMap.remove(key, current);
         }
     }
 }
