@@ -64,6 +64,8 @@ hs_err_pid*
 doc_temp.txt
 
 /local/
+local.zip
+
 local-knowledge/
 .codex
 .claude
