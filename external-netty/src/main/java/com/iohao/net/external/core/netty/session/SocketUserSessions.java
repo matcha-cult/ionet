@@ -93,14 +93,20 @@ public final class SocketUserSessions extends AbstractUserSessions<ChannelHandle
             return false;
         }
 
-        userSession.setUserId(userId);
+        if (userSession.isVerifyIdentity()) {
+            if (userSession.getUserId() == userId) {
+                this.userIdMap.put(userId, userSession);
+                return true;
+            }
 
+            return false;
+        }
+
+        userSession.setUserId(userId);
         this.userIdMap.put(userId, userSession);
 
         // Fire online hook only after the session is fully identity-verified.
-        if (userSession.isVerifyIdentity()) {
-            this.userHookInto(userSession);
-        }
+        this.userHookInto(userSession);
 
         return true;
     }
