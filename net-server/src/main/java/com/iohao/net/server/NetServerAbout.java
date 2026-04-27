@@ -157,9 +157,6 @@ final class NetServerAgent implements Agent {
 
             ServerManager.addServer(server);
 
-            // Register to center after local state/listeners are prepared.
-            this.connectionManager.publishMessageToCenter(message);
-
             CompletableFuture<Integer> future = futureManager.ofFuture(futureId);
             future.thenAcceptAsync(_ -> {
                 IonetBanner.addTag(server.tag());
@@ -177,6 +174,9 @@ final class NetServerAgent implements Agent {
                 }
 
             }, TaskKit.getNetVirtualExecutor());
+
+            // Register to center after local state/listeners are prepared.
+            this.connectionManager.publishMessageToCenter(message);
         }
     }
 
