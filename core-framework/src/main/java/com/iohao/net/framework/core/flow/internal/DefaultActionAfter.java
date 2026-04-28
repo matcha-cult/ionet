@@ -74,8 +74,12 @@ public final class DefaultActionAfter implements ActionAfter {
             return;
         }
 
-        var codec = DataCodecManager.getInternalDataCodec();
         var actionMethodReturnInfo = flowContext.getActionCommand().actionMethodReturn;
+        if (actionMethodReturnInfo.isVoid()) {
+            return;
+        }
+
+        var codec = DataCodecManager.getInternalDataCodec();
         var paramParser = MethodParsers.getMethodParser(actionMethodReturnInfo);
         var result = flowContext.getOriginalMethodResult();
 
