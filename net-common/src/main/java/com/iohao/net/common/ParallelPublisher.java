@@ -132,7 +132,16 @@ public final class ParallelPublisher implements Publisher {
 
                     encoder.encoder(message, headerEncoder, buffer);
                     int limit = encoder.limit();
-                    publication.offer(buffer, 0, limit);
+                    long result = publication.offer(buffer, 0, limit);
+                    if (result <= 0) {
+                        PublicationOfferKit.offerAfterFailedResult(
+                                this.publicationName,
+                                message,
+                                result,
+                                () -> publication.offer(buffer, 0, limit),
+                                () -> running
+                        );
+                    }
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

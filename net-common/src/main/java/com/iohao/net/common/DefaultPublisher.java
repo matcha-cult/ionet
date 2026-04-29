@@ -113,8 +113,16 @@ public final class DefaultPublisher implements Publisher {
 
                     encoder.encoder(message, headerEncoder, buffer);
                     int limit = encoder.limit();
-                    // The encoder writes into the shared direct buffer and reports the message boundary via limit().
-                    publication.offer(buffer, 0, limit);
+                    long result = publication.offer(buffer, 0, limit);
+                    if (result <= 0) {
+                        PublicationOfferKit.offerAfterFailedResult(
+                                key,
+                                message,
+                                result,
+                                () -> publication.offer(buffer, 0, limit),
+                                () -> running
+                        );
+                    }
                 }
             }
 
